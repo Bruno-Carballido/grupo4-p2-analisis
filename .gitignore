@@ -1,3 +1,6 @@
+/.idea/
+**/out/
+**/obligatorio2023/
 # Compiled class file
 *.class
 
