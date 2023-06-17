@@ -21,9 +21,14 @@ public class HashImpl<K extends Comparable<K>, T> implements Hash<K, T> {
     }
 
     private int hashFunction(K key) {
-        int hashCode = key.hashCode();
-        return Math.abs(hashCode % array.length);
+        return hashFunctionLength(key, array.length);
     }
+
+    private int hashFunctionLength(K key, int arrayLength) {
+        int hashCode = key.hashCode();
+        return Math.abs(hashCode % arrayLength);
+    }
+
 
     @Override
     public void put(K key, T value) {
@@ -42,6 +47,24 @@ public class HashImpl<K extends Comparable<K>, T> implements Hash<K, T> {
             array[nextIndex] = newNode;
         }
         size++;
+    }
+
+    @Override
+    public void update(K key, T value) throws EmptyHashException {
+        int index = hashFunction(key);
+        int startIndex = index;
+
+        while (array[index] != null) {
+            if (array[index].isActive() && array[index].getKey().equals(key)) {
+                HashNode<K, T> a = array[index];
+                a.setValue(value);
+                array[index] = a;
+                return;
+            }
+            index = (index + 1) % array.length;
+            if (index == startIndex) break;
+        }
+        throw new EmptyHashException();
     }
 
     @Override
@@ -82,7 +105,7 @@ public class HashImpl<K extends Comparable<K>, T> implements Hash<K, T> {
         HashNode<K, T>[] newArray = new HashNode[array.length * 2];
         for (HashNode<K, T> node : array) {
             if (node != null && node.isActive()) {
-                int newIndex = hashFunction(node.getKey());
+                int newIndex = hashFunctionLength(node.getKey(), newArray.length);
                 while (newArray[newIndex] != null) {
                     newIndex = (newIndex + 1) % newArray.length;
                 }

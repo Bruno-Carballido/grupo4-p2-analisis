@@ -12,41 +12,46 @@ import java.util.regex.Pattern;
 
 public class Main {
 
-    private static final Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+    private static Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
+    private static String[] pilotos_lista = new String[20];
+    private static Hash<String, Long> pilotos_mentions = new HashImpl<>(25);
+    //    private static Hash<String, User> pilotos = new HashImpl<>(25);
+    private static Hash<String, User> usuarios = new HashImpl<>(30000);
+    private static LinkedList<Tweet> tweets = new LinkedListImpl<>();
+
 
     public static void main(String[] args) {
+        System.out.println("INICIO MAIN");
         long start = System.currentTimeMillis();
-        Hash<String, User> pilotos = new HashImpl<>(25);
-        Hash<String, User> usuarios = new HashImpl<>(30000);
-        LinkedList<Tweet> tweets = new LinkedListImpl<>();
 
         try {
             BufferedReader drivers = new BufferedReader(new FileReader("obligatorio2023/drivers.txt"));
-            String line = null;
+            String line;
 
-            // Carga de usuarios ------------
-            long idUser = 0;
+            // Carga de pilotos ------------
+            int cant_pilotos = 0;
             while ((line = drivers.readLine()) != null) {
-                User user = new User(idUser, line);
-                pilotos.put(line, user);
-                idUser++;
+                pilotos_mentions.put(line, 0L);
+                pilotos_lista[cant_pilotos] = line;
+                cant_pilotos++;
             }
-            // Fin carga de usuarios ------------
+            // Fin carga de pilotos ------------
 
             BufferedReader input = new BufferedReader(new FileReader("obligatorio2023/f1_dataset_test.csv"));
             String[] rows = input.readLine().split(",");
             line = null;
             int cantColumnas = rows.length;
             int idUsuario = 0;
+            User u;
 
             StringBuilder filaIncompleta = new StringBuilder();
+
             while ((line = input.readLine()) != null) {// leo hasta salto de línea
                 String new_line = filaIncompleta + line;
                 String[] fields = p.split(new_line, -1); // parseo campos por comillas
-                boolean isComillasPar = cantComillasPar(new_line);
-                if (fields.length == cantColumnas && isComillasPar) {
+                if (fields.length == cantColumnas && cantComillasPar(new_line)) {
                     filaIncompleta.setLength(0);
-                    User u;
                     try {
                         u = usuarios.get(fields[1]);
                     } catch (Exception ex) {
@@ -56,8 +61,6 @@ public class Main {
                     }
                     tweets.add(new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], Boolean.parseBoolean(fields[13]), u));
                     //System.out.println(fields[0]);
-                } else if (fields.length > cantColumnas && isComillasPar) {
-                    filaIncompleta.setLength(0);
                 } else {
                     filaIncompleta.append(line);
                 }
@@ -76,11 +79,45 @@ public class Main {
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
+        search10MostActivePilots();
         menu();
     }
 
     private static boolean cantComillasPar(String line) {
         return (line.length() - line.replace("\"", "").length()) % 2 == 0;
+    }
+
+    private static void search10MostActivePilots() {
+        System.out.println("------------------------");
+        long start = System.currentTimeMillis();
+        String contenidoTweets = "";
+        for (int i = 0; i < tweets.size(); i++) {
+            try {
+                contenidoTweets = String.join("|", contenidoTweets, tweets.get(i).getContent());
+                if (i > 0 && (i % 3000 == 0 || i == tweets.size() - 1)) {
+                    for (String piloto : pilotos_lista) {
+                        long cant_menciones = contenidoTweets.length() - contenidoTweets.replaceAll(Pattern.quote(piloto.substring(0, 1)) + "(?=" + Pattern.quote(piloto.substring(1)) + ")", "").length();
+                        long menciones_anteriores = pilotos_mentions.get(piloto);
+                        pilotos_mentions.update(piloto, menciones_anteriores + cant_menciones);
+                    }
+                    contenidoTweets = "";
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        for (String piloto : pilotos_lista) {
+            try {
+                System.out.printf("%s: %s%n", piloto, pilotos_mentions.get(piloto));
+            } catch (Exception e) {
+                System.out.println("Error");
+            }
+        }
+        long finish = System.currentTimeMillis();
+        long timeElapsed = finish - start;
+        System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
+        System.out.println("--------------------");
     }
 
     public static void menu() {
