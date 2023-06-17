@@ -1,80 +1,89 @@
+import entities.Tweet;
+import entities.User;
+import uy.edu.um.prog2.adt.Hash;
+import uy.edu.um.prog2.adt.HashImpl;
+import uy.edu.um.prog2.adt.LinkedList;
+import uy.edu.um.prog2.adt.LinkedListImpl;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
 public class Main {
 
-    public static void main(String[] args) {
+    private static final Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
+    public static void main(String[] args) {
+        long start = System.currentTimeMillis();
+        Hash<String, User> pilotos = new HashImpl<>(25);
+        Hash<String, User> usuarios = new HashImpl<>(30000);
+        LinkedList<Tweet> tweets = new LinkedListImpl<>();
 
         try {
-            BufferedReader input = new
-                    BufferedReader(new FileReader("obligatorio2023/f1_dataset_test.csv"));
+            BufferedReader drivers = new BufferedReader(new FileReader("obligatorio2023/drivers.txt"));
             String line = null;
 
+            // Carga de usuarios ------------
+            long idUser = 0;
+            while ((line = drivers.readLine()) != null) {
+                User user = new User(idUser, line);
+                pilotos.put(line, user);
+                idUser++;
+            }
+            // Fin carga de usuarios ------------
+
+            BufferedReader input = new BufferedReader(new FileReader("obligatorio2023/f1_dataset_test.csv"));
             String[] rows = input.readLine().split(",");
+            line = null;
             int cantColumnas = rows.length;
-            System.out.println(cantColumnas);
+            int idUsuario = 0;
 
-            int cantColumnasActual = 0;
-
-            ArrayList<String[]> tmp = new ArrayList<>();
             StringBuilder filaIncompleta = new StringBuilder();
-
             while ((line = input.readLine()) != null) {// leo hasta salto de línea
                 String new_line = filaIncompleta + line;
-                String[] fields = parseCSVLine(new_line); // parseo campos por comillas
-                if (fields.length == cantColumnas && cantComillasPar(new_line)) {
-                    filaIncompleta = new StringBuilder();
-                    tmp.add(fields);
-                    //System.out.println(Arrays.toString(fields));
-                } else if (fields.length > cantColumnas && cantComillasPar(new_line)) {
+                String[] fields = p.split(new_line, -1); // parseo campos por comillas
+                boolean isComillasPar = cantComillasPar(new_line);
+                if (fields.length == cantColumnas && isComillasPar) {
+                    filaIncompleta.setLength(0);
+                    User u;
+                    try {
+                        u = usuarios.get(fields[1]);
+                    } catch (Exception ex) {
+                        u = new User(idUsuario, fields[1]);
+                        usuarios.put(fields[1], u);
+                        idUsuario++;
+                    }
+                    tweets.add(new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], Boolean.parseBoolean(fields[13]), u));
+                    //System.out.println(fields[0]);
+                } else if (fields.length > cantColumnas && isComillasPar) {
                     filaIncompleta.setLength(0);
                 } else {
                     filaIncompleta.append(line);
                 }
             }
             input.close();
-            System.out.println(tmp.size());
+
+            long finish = System.currentTimeMillis();
+            long timeElapsed = finish - start;
+
+            System.out.println("--------------------");
+            System.out.printf("%s %s%n", "Cantidad de Tweets:", tweets.size());
+            System.out.printf("%s %s%n", "Cantidad de usuarios:", idUsuario);
+            System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
+            System.out.println("--------------------");
+
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
         menu();
     }
 
-    public static String[] parseLineRecursive(BufferedReader input, String line, int cantColumnas, int cantColumnasActual) {
-        String[] fields = parseCSVLine(line); // parseo campos por comillas
-        if (fields.length + cantColumnasActual == cantColumnas && cantComillasPar(line)) {
-            return fields;
-        } else {
-            try {
-                return parseLineRecursive(input, line + input.readLine(), cantColumnas, fields.length);
-            } catch (Exception e) {
-                return parseLineRecursive(input, line, cantColumnas, fields.length);
-            }
-        }
+    private static boolean cantComillasPar(String line) {
+        return (line.length() - line.replace("\"", "").length()) % 2 == 0;
     }
 
-    public static String[] parseCSVLine(String line) {
-        // Create a pattern to match breaks
-        Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-        // Split input with the pattern
-        String[] fields = p.split(line, -1);
-        for (int i = 0; i < fields.length; i++) {
-            // Get rid of residual double quotes
-            fields[i] = fields[i].replace("\"", "");
-        }
-        return fields;
-    }
-
-    public static boolean cantComillasPar(String line) {
-        int count = line.length() - line.replace("\"", "").length();
-        return count % 2 == 0;
-    }
-    public static void menu (){
+    public static void menu() {
         System.out.println("Menú principal");
         System.out.println("Seleccione la opción del menú: ");
         System.out.println("    1. Listar los 10 pilotos activos en la temporada 2023 más mencionados en los tweets en un mes");
@@ -107,7 +116,6 @@ public class Main {
         } else {
             System.out.println("Opción inválida");
         }
-
 
     }
 }

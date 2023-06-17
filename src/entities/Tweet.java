@@ -7,6 +7,21 @@ public class Tweet {
     private boolean isRetweet;
     private User usuario;
 
+    public Tweet(long id, String content, String source, boolean isRetweet) {
+        this.id = id;
+        this.content = content;
+        this.source = source;
+        this.isRetweet = isRetweet;
+    }
+
+    public Tweet(long id, String content, String source, boolean isRetweet, User usuario) {
+        this.id = id;
+        this.content = content;
+        this.source = source;
+        this.isRetweet = isRetweet;
+        this.usuario = usuario;
+    }
+
     public long getId() {
         return id;
     }
@@ -47,11 +62,4 @@ public class Tweet {
         this.usuario = usuario;
     }
 
-    public Tweet(long id, String content, String source, boolean isRetweet, User usuario) {
-        this.id = id;
-        this.content = content;
-        this.source = source;
-        this.isRetweet = isRetweet;
-        this.usuario = usuario;
-    }
 }

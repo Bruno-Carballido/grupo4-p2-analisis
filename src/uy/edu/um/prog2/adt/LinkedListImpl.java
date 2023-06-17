@@ -4,6 +4,7 @@ import uy.edu.um.prog2.adt.exceptions.DatosIncorrectos;
 
 public class LinkedListImpl<T> implements LinkedList<T> {
     private Node<T> first;
+    private Node<T> last;
     private int size;
 
 
@@ -15,19 +16,15 @@ public class LinkedListImpl<T> implements LinkedList<T> {
 
     @Override
     public void add(T value) {
-        if (value != null) {
-            Node<T> elementToAdd = new Node<>(value);
-            if (this.first == null) { // si la lista es vacia
-                this.first = elementToAdd;
-            } else { // en caso de no ser vacia se agrega al final
-                Node<T> curr = this.first;
-                while (curr.getNext() != null) {
-                    curr = curr.getNext();
-                }
-                curr.setNext(elementToAdd);
-            }
-            this.size++;
-        }
+        Node<T> elementToAdd = new Node<>(value);
+
+        if (this.first == null)
+            this.first = elementToAdd;
+        else
+            this.last.setNext(elementToAdd);
+
+        this.last = elementToAdd;
+        this.size++;
     }
 
     @Override
@@ -80,9 +77,11 @@ public class LinkedListImpl<T> implements LinkedList<T> {
                 // Verifico si es el primer valor (caso borde) y no el primero
             } else if (searchValue.getNext() == null && searchValue != this.first) {
                 beforeSearchValue.setNext(null);
+                this.last = beforeSearchValue;
                 // Sí es el primer valor y el último (lista de un solo valor)
             } else if (searchValue.getNext() == null && searchValue == this.first) {
                 this.first = null;
+                this.last = null;
             } else { // resto de los casos
                 beforeSearchValue.setNext(searchValue.getNext());
                 searchValue.setNext(null);

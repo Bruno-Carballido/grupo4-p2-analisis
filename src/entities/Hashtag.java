@@ -7,6 +7,12 @@ public class Hashtag {
     private String text;
     private LinkedListImpl<Tweet> listatweets = new LinkedListImpl<Tweet>();
 
+    public Hashtag(long id, String text, LinkedListImpl<Tweet> listatweets) {
+        this.id = id;
+        this.text = text;
+        this.listatweets = listatweets;
+    }
+
     public long getId() {
         return id;
     }
@@ -31,9 +37,5 @@ public class Hashtag {
         this.listatweets = listatweets;
     }
 
-    public Hashtag(long id, String text, LinkedListImpl<Tweet> listatweets) {
-        this.id = id;
-        this.text = text;
-        this.listatweets = listatweets;
-    }
+
 }

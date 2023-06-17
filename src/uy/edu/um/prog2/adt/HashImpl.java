@@ -15,21 +15,24 @@ public class HashImpl<K extends Comparable<K>, T> implements Hash<K, T> {
         this.size = 0;
     }
 
+    public HashImpl(int capacity) {
+        this.array = new HashNode[capacity];
+        this.size = 0;
+    }
+
     private int hashFunction(K key) {
         int hashCode = key.hashCode();
-        return hashCode % array.length;
+        return Math.abs(hashCode % array.length);
     }
 
     @Override
     public void put(K key, T value) {
-        if (size >= array.length * LOAD_FACTOR)
-            resizeArray();
+        if (size >= array.length * LOAD_FACTOR) resizeArray();
 
         int index = hashFunction(key);
         HashNode<K, T> newNode = new HashNode<>(key, value);
 
-        if (array[index] == null || !array[index].isActive())
-            array[index] = newNode;
+        if (array[index] == null || !array[index].isActive()) array[index] = newNode;
         else {
             // En caso de que el lugar en el array ya este tomado busco el siguiente index
             int nextIndex = (index + 1) % array.length;
@@ -47,11 +50,9 @@ public class HashImpl<K extends Comparable<K>, T> implements Hash<K, T> {
         int startIndex = index;
 
         while (array[index] != null) {
-            if (array[index].isActive() && array[index].getKey().equals(key))
-                return array[index].getValue();
+            if (array[index].isActive() && array[index].getKey().equals(key)) return array[index].getValue();
             index = (index + 1) % array.length;
-            if (index == startIndex)
-                break;
+            if (index == startIndex) break;
         }
         throw new EmptyHashException();
     }
@@ -68,8 +69,7 @@ public class HashImpl<K extends Comparable<K>, T> implements Hash<K, T> {
                 return;
             }
             index = (index + 1) % array.length;
-            if (index == startIndex)
-                break;
+            if (index == startIndex) break;
         }
     }
 
