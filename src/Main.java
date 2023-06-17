@@ -7,17 +7,13 @@ import uy.edu.um.prog2.adt.LinkedListImpl;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
 public class Main {
 
     private static Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-
-    private static SimpleDateFormat formatterDate = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-
     private static String[] pilotosLista = new String[20];
     private static Hash<String, Long> pilotosMentions = new HashImpl<>(25);
     //    private static Hash<String, User> pilotos = new HashImpl<>(25);
@@ -63,12 +59,12 @@ public class Main {
                         usuarios.put(fields[1], u);
                         idUsuario++;
                     }
-                    long fecha;
+                    String[] fecha;
                     try {
-                        Date date = formatterDate.parse(fields[9]);
-                        fecha = date.getTime();
+                        String fecha_str = fields[9].split(" ", 0)[0];
+                        fecha = fecha_str.split("-", -1);
                     } catch (Exception e) {
-                        fecha = 0;
+                        fecha = new String[]{"", "", ""};
                     }
                     tweets.add(new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], fecha, Boolean.parseBoolean(fields[13]), u));
                     //System.out.println(fields[0]);
@@ -90,7 +86,7 @@ public class Main {
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
-        search10MostActivePilots();
+        search10MostActivePilots("2021", "12");
         menu();
     }
 
@@ -98,14 +94,18 @@ public class Main {
         return (line.length() - line.replace("\"", "").length()) % 2 == 0;
     }
 
-    private static void search10MostActivePilots() {
+    private static void search10MostActivePilots(String anio, String mes) {
         System.out.println("------------------------");
         long start = System.currentTimeMillis();
         String contenidoTweets = "";
         for (int i = 0; i < tweets.size(); i++) {
             try {
-                contenidoTweets = String.join("|", contenidoTweets, tweets.get(i).getContent());
-                if (i > 0 && (i % 50 == 0 || i == tweets.size() - 1)) {
+                Tweet t = tweets.get(i);
+                String[] f = t.getDate();
+                if (f[0].equals(anio) && f[1].equals(mes)) {
+                    contenidoTweets = String.join("|", contenidoTweets, t.getContent());
+                }
+                if (i > 0 && (i % 1000 == 0 || i == tweets.size() - 1)) {
                     for (String piloto : pilotosLista) {
                         long cant_menciones = contenidoTweets.length() - contenidoTweets.replaceAll(Pattern.quote(piloto.substring(0, 1)) + "(?=" + Pattern.quote(piloto.substring(1)) + ")", "").length();
                         long menciones_anteriores = pilotosMentions.get(piloto);
