@@ -6,7 +6,8 @@ public class LinkedListImpl<T> implements LinkedList<T> {
     private Node<T> first;
     private Node<T> last;
     private int size;
-
+    private int lastGetIndex;
+    private Node<T> lastGetNode;
 
     public LinkedListImpl() {
         this.first = null;
@@ -32,12 +33,21 @@ public class LinkedListImpl<T> implements LinkedList<T> {
         if (position < 0 || position >= this.size) {
             throw new DatosIncorrectos();
         }
-        Node<T> aux = this.first;
+        int initialPosition = position;
+        Node<T> aux;
+        if (position == (lastGetIndex + 1)) {
+            aux = this.lastGetNode;
+            position = 1;
+        } else {
+            aux = this.first;
+        }
         // Se busca el nodo que corresponde con la posición
         for (int i = 0; i < position; i++) {
             aux = aux.getNext();
         }
         // Se retorna el valor del nodo en la posición especificada
+        this.lastGetIndex = initialPosition;
+        this.lastGetNode = aux;
         return aux.getValue();
     }
 
