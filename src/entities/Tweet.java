@@ -4,22 +4,33 @@ public class Tweet {
     private long id;
     private String content;
     private String source;
+    private long date;
     private boolean isRetweet;
     private User usuario;
 
-    public Tweet(long id, String content, String source, boolean isRetweet) {
+    public Tweet(long id, String content, String source, long date, boolean isRetweet) {
         this.id = id;
         this.content = content;
         this.source = source;
+        this.date = date;
         this.isRetweet = isRetweet;
     }
 
-    public Tweet(long id, String content, String source, boolean isRetweet, User usuario) {
+    public Tweet(long id, String content, String source, long date, boolean isRetweet, User usuario) {
         this.id = id;
         this.content = content;
         this.source = source;
+        this.date = date;
         this.isRetweet = isRetweet;
         this.usuario = usuario;
+    }
+
+    public long getDate() {
+        return date;
+    }
+
+    public void setDate(long date) {
+        this.date = date;
     }
 
     public long getId() {

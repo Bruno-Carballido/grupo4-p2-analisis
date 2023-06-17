@@ -7,6 +7,8 @@ import uy.edu.um.prog2.adt.LinkedListImpl;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -14,8 +16,10 @@ public class Main {
 
     private static Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
-    private static String[] pilotos_lista = new String[20];
-    private static Hash<String, Long> pilotos_mentions = new HashImpl<>(25);
+    private static SimpleDateFormat formatterDate = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+    private static String[] pilotosLista = new String[20];
+    private static Hash<String, Long> pilotosMentions = new HashImpl<>(25);
     //    private static Hash<String, User> pilotos = new HashImpl<>(25);
     private static Hash<String, User> usuarios = new HashImpl<>(30000);
     private static LinkedList<Tweet> tweets = new LinkedListImpl<>();
@@ -32,8 +36,8 @@ public class Main {
             // Carga de pilotos ------------
             int cant_pilotos = 0;
             while ((line = drivers.readLine()) != null) {
-                pilotos_mentions.put(line, 0L);
-                pilotos_lista[cant_pilotos] = line;
+                pilotosMentions.put(line, 0L);
+                pilotosLista[cant_pilotos] = line;
                 cant_pilotos++;
             }
             // Fin carga de pilotos ------------
@@ -59,7 +63,14 @@ public class Main {
                         usuarios.put(fields[1], u);
                         idUsuario++;
                     }
-                    tweets.add(new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], Boolean.parseBoolean(fields[13]), u));
+                    long fecha;
+                    try {
+                        Date date = formatterDate.parse(fields[9]);
+                        fecha = date.getTime();
+                    } catch (Exception e) {
+                        fecha = 0;
+                    }
+                    tweets.add(new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], fecha, Boolean.parseBoolean(fields[13]), u));
                     //System.out.println(fields[0]);
                 } else {
                     filaIncompleta.append(line);
@@ -94,11 +105,11 @@ public class Main {
         for (int i = 0; i < tweets.size(); i++) {
             try {
                 contenidoTweets = String.join("|", contenidoTweets, tweets.get(i).getContent());
-                if (i > 0 && (i % 3000 == 0 || i == tweets.size() - 1)) {
-                    for (String piloto : pilotos_lista) {
+                if (i > 0 && (i % 50 == 0 || i == tweets.size() - 1)) {
+                    for (String piloto : pilotosLista) {
                         long cant_menciones = contenidoTweets.length() - contenidoTweets.replaceAll(Pattern.quote(piloto.substring(0, 1)) + "(?=" + Pattern.quote(piloto.substring(1)) + ")", "").length();
-                        long menciones_anteriores = pilotos_mentions.get(piloto);
-                        pilotos_mentions.update(piloto, menciones_anteriores + cant_menciones);
+                        long menciones_anteriores = pilotosMentions.get(piloto);
+                        pilotosMentions.update(piloto, menciones_anteriores + cant_menciones);
                     }
                     contenidoTweets = "";
                 }
@@ -107,9 +118,9 @@ public class Main {
             }
         }
 
-        for (String piloto : pilotos_lista) {
+        for (String piloto : pilotosLista) {
             try {
-                System.out.printf("%s: %s%n", piloto, pilotos_mentions.get(piloto));
+                System.out.printf("%s: %s%n", piloto, pilotosMentions.get(piloto));
             } catch (Exception e) {
                 System.out.println("Error");
             }
