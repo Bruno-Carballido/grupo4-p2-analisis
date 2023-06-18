@@ -15,8 +15,10 @@ public class Main {
 
     private static Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
     private static String[] pilotosLista = new String[20];
-    private static Hash<String, Long> pilotosMentions = new HashImpl<>(25);
+
     //    private static Hash<String, User> pilotos = new HashImpl<>(25);
+    private static LinkedList<String> usuariosLista = new LinkedListImpl<>();
+
     private static Hash<String, User> usuarios = new HashImpl<>(30000);
     private static LinkedList<Tweet> tweets = new LinkedListImpl<>();
 
@@ -32,7 +34,6 @@ public class Main {
             // Carga de pilotos ------------
             int cant_pilotos = 0;
             while ((line = drivers.readLine()) != null) {
-                pilotosMentions.put(line, 0L);
                 pilotosLista[cant_pilotos] = line;
                 cant_pilotos++;
             }
@@ -49,14 +50,15 @@ public class Main {
 
             while ((line = input.readLine()) != null) {// leo hasta salto de línea
                 String new_line = filaIncompleta + line;
-                String[] fields = p.split(new_line, -1); // parseo campos por comillas
+                String[] fields = parseCSVLine(new_line); // parseo campos por comillas
                 if (fields.length == cantColumnas && cantComillasPar(new_line)) {
                     filaIncompleta.setLength(0);
                     try {
                         u = usuarios.get(fields[1]);
                     } catch (Exception ex) {
-                        u = new User(idUsuario, fields[1]);
+                        u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]));
                         usuarios.put(fields[1], u);
+                        usuariosLista.add(fields[1]);
                         idUsuario++;
                     }
                     String[] fecha;
@@ -66,7 +68,9 @@ public class Main {
                     } catch (Exception e) {
                         fecha = new String[]{"", "", ""};
                     }
-                    tweets.add(new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], fecha, Boolean.parseBoolean(fields[13]), u));
+                    Tweet tw = new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], fecha, Boolean.parseBoolean(fields[13]), u);
+                    tweets.add(tw);
+                    u.appendTweets(tw);
                     //System.out.println(fields[0]);
                 } else {
                     filaIncompleta.append(line);
@@ -77,17 +81,29 @@ public class Main {
             long finish = System.currentTimeMillis();
             long timeElapsed = finish - start;
 
-            System.out.println("--------------------");
+            System.out.println("------------------------");
             System.out.printf("%s %s%n", "Cantidad de Tweets:", tweets.size());
             System.out.printf("%s %s%n", "Cantidad de usuarios:", idUsuario);
             System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
-            System.out.println("--------------------");
+            System.out.println("------------------------");
 
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
-        search10MostActivePilots("2021", "12");
+//        search10MostActivePilots("2021", "12");
+        search15UsersMostTweets();
         menu();
+    }
+
+    public static String[] parseCSVLine(String line) {
+        // Create a pattern to match breaks
+        // Split input with the pattern
+        String[] fields = p.split(line, -1);
+        for (int i = 0; i < fields.length; i++) {
+            // Get rid of residual double quotes
+            fields[i] = fields[i].replace("\"", "");
+        }
+        return fields;
     }
 
     private static boolean cantComillasPar(String line) {
@@ -96,39 +112,107 @@ public class Main {
 
     private static void search10MostActivePilots(String anio, String mes) {
         System.out.println("------------------------");
-        long start = System.currentTimeMillis();
-        String contenidoTweets = "";
-        for (int i = 0; i < tweets.size(); i++) {
-            try {
+        try {
+            long start = System.currentTimeMillis();
+
+            Hash<String, Long> pilotosMentions = new HashImpl<>(25);
+            for (String piloto : pilotosLista) {
+                pilotosMentions.put(piloto, 0L);
+            }
+
+            for (int i = 0; i < tweets.size(); i++) {
                 Tweet t = tweets.get(i);
                 String[] f = t.getDate();
+                String contenidoTweets = t.getContent();
                 if (f[0].equals(anio) && f[1].equals(mes)) {
-                    contenidoTweets = String.join("|", contenidoTweets, t.getContent());
-                }
-                if (i > 0 && (i % 1000 == 0 || i == tweets.size() - 1)) {
                     for (String piloto : pilotosLista) {
-                        long cant_menciones = contenidoTweets.length() - contenidoTweets.replaceAll(Pattern.quote(piloto.substring(0, 1)) + "(?=" + Pattern.quote(piloto.substring(1)) + ")", "").length();
+                        // long cant_menciones = (contenidoTweets.length() - (contenidoTweets.replaceAll(piloto, "").length())) / piloto.length();
                         long menciones_anteriores = pilotosMentions.get(piloto);
-                        pilotosMentions.update(piloto, menciones_anteriores + cant_menciones);
+                        // pilotosMentions.update(piloto, menciones_anteriores + cant_menciones);
+                        pilotosMentions.update(piloto, menciones_anteriores + (contenidoTweets.contains(piloto) ? 1 : 0));
                     }
-                    contenidoTweets = "";
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
-        }
 
-        for (String piloto : pilotosLista) {
-            try {
-                System.out.printf("%s: %s%n", piloto, pilotosMentions.get(piloto));
-            } catch (Exception e) {
-                System.out.println("Error");
+            String[] pListAux = pilotosLista;
+            int n = pilotosLista.length;
+
+            for (int i = 0; i < n - 1; i++) {
+                for (int j = 0; j < n - i - 1; j++) {
+                    if (pilotosMentions.get(pListAux[j]) > pilotosMentions.get(pListAux[j + 1])) {
+                        String temp = pListAux[j];
+                        pListAux[j] = pListAux[j + 1];
+                        pListAux[j + 1] = temp;
+                    }
+                }
+                if (i < 10) System.out.printf("%s %s%n", pListAux[n - i - 1], pilotosMentions.get(pListAux[n - i - 1]));
+                else break;
             }
+
+            long finish = System.currentTimeMillis();
+            long timeElapsed = finish - start;
+            System.out.println("------------------------");
+            System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
+            System.out.println("------------------------");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        long finish = System.currentTimeMillis();
-        long timeElapsed = finish - start;
-        System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
-        System.out.println("--------------------");
+    }
+
+    private static void search15UsersMostTweets() {
+        System.out.println("------------------------");
+        try {
+            long start = System.currentTimeMillis();
+
+            String[] usuariosLst = new String[usuariosLista.size()];
+            Hash<String, Integer> userTweets = new HashImpl<>(13000);
+
+            for (int i = 0; i < usuariosLista.size(); i++) {
+                User u = usuarios.get(usuariosLista.get(i));
+                userTweets.put(u.getName(), u.getTweets().size());
+                usuariosLst[i] = u.getName();
+            }
+
+//            for (int i = 0; i < tweets.size(); i++) {
+//                Tweet t = tweets.get(i);
+//                String nUsu = t.getUsuario().getName();
+//                Long cant = 0L;
+//                try {
+//                    cant = userTweets.get(nUsu);
+//                    userTweets.update(nUsu, cant + 1);
+//                } catch (Exception ex) {
+//                    userTweets.put(nUsu, 1L);
+//                }
+//            }
+
+            int n = usuariosLista.size();
+
+            for (int i = 0; i < n - 1; i++) {
+                for (int j = 0; j < n - i - 1; j++) {
+                    if (userTweets.get(usuariosLst[j]) > userTweets.get(usuariosLst[j + 1])) {
+                        String temp = usuariosLst[j];
+                        usuariosLst[j] = usuariosLst[j + 1];
+                        usuariosLst[j + 1] = temp;
+                    }
+                }
+                if (i < 15){
+                    System.out.println(usuariosLst[n - i - 1]);
+                    System.out.printf("\t%s Tweets\n\tVerificado: %s%n",
+                            userTweets.get(usuariosLst[n - i - 1]),
+                            usuarios.get(usuariosLst[n - i - 1]).isVerificado() ? "Si" : "No");
+                }
+                else break;
+            }
+
+
+            long finish = System.currentTimeMillis();
+            long timeElapsed = finish - start;
+            System.out.println("------------------------");
+            System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
+            System.out.println("------------------------");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void menu() {
@@ -147,7 +231,7 @@ public class Main {
         int numero = choice.nextInt();
 
         if (numero == 1) {
-            System.out.println("Hola, opción 1");
+            search10MostActivePilots("2021", "12");
         } else if (numero == 2) {
             System.out.println("Hola, opción 2");
         } else if (numero == 3) {
