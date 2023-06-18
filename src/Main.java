@@ -5,7 +5,6 @@ import uy.edu.um.prog2.adt.Hash;
 import uy.edu.um.prog2.adt.HashImpl;
 import uy.edu.um.prog2.adt.LinkedList;
 import uy.edu.um.prog2.adt.LinkedListImpl;
-import uy.edu.um.prog2.adt.exceptions.DatosIncorrectos;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -57,6 +56,7 @@ public class Main {
             String[] hashtagSplit;
             Hashtag[] hs;
             Hashtag hh;
+            Double fav;
 
             while ((line = input.readLine()) != null) {// leo hasta salto de línea
                 new_line = filaIncompleta.concat(line);
@@ -67,7 +67,12 @@ public class Main {
                     try {
                         u = usuarios.get(fields[1]);
                     } catch (Exception ex) {
-                        u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]), Double.parseDouble(fields[7]));
+                        try {
+                            fav = Double.parseDouble(fields[7]);
+                        } catch (Exception e) {
+                            fav = 0d;
+                        }
+                        u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]), fav);
                         //u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]));
                         usuarios.put(fields[1], u);
                         idUsuario++;
@@ -222,9 +227,11 @@ public class Main {
             throw new RuntimeException(e);
         }
     }
-    public static void top7WithMoreFavourite (){
+
+    public static void top7WithMoreFavourite() {
 
     }
+
     public static int countTweetsWithWord() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Ingrese la palabra a buscar: ");
@@ -232,21 +239,22 @@ public class Main {
         System.out.println("------------------------");
         int contador = 0;
         int n = tweets.size();
+        Tweet tweet;
         for (int i = 0; i < n; i++) {
-            Tweet tweet;
             try {
                 tweet = tweets.get(i);
                 if (tweet.getContent().toLowerCase().contains(word)) {
                     contador++;
                 }
-            } catch (DatosIncorrectos e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
         System.out.println(contador);
         return contador;
     }
-            public static void menu() {
+
+    public static void menu() {
         System.out.println("Menú principal");
         System.out.println("Seleccione la opción del menú: ");
         System.out.println("    1. Listar los 10 pilotos activos en la temporada 2023 más mencionados en los tweets en un mes");
