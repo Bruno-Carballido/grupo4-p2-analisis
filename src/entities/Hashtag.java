@@ -5,12 +5,10 @@ import uy.edu.um.prog2.adt.LinkedListImpl;
 public class Hashtag {
     private long id;
     private String text;
-    private LinkedListImpl<Tweet> listatweets = new LinkedListImpl<Tweet>();
 
-    public Hashtag(long id, String text, LinkedListImpl<Tweet> listatweets) {
+    public Hashtag(long id, String text) {
         this.id = id;
         this.text = text;
-        this.listatweets = listatweets;
     }
 
     public long getId() {
@@ -27,14 +25,6 @@ public class Hashtag {
 
     public void setText(String text) {
         this.text = text;
-    }
-
-    public LinkedListImpl<Tweet> getListatweets() {
-        return listatweets;
-    }
-
-    public void setListatweets(LinkedListImpl<Tweet> listatweets) {
-        this.listatweets = listatweets;
     }
 
 

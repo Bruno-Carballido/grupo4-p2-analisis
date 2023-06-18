@@ -1,3 +1,4 @@
+import entities.Hashtag;
 import entities.Tweet;
 import entities.User;
 import uy.edu.um.prog2.adt.Hash;
@@ -14,11 +15,10 @@ public class Main {
 
     private static Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
     private static String[] pilotosLista = new String[20];
-
-    //    private static Hash<String, User> pilotos = new HashImpl<>(25);
-
     private static Hash<String, User> usuarios = new HashImpl<>(30000);
     private static LinkedList<Tweet> tweets = new LinkedListImpl<>();
+    private static Hash<String, Hashtag> hashtags = new HashImpl<>(1000);
+//    private static LinkedList<Hashtag> hashtags = new LinkedListImpl<>();
 
 
     public static void main(String[] args) {
@@ -41,16 +41,28 @@ public class Main {
             String[] rows = input.readLine().split(",");
             line = null;
             int cantColumnas = rows.length;
+
             int idUsuario = 0;
             User u;
 
-            StringBuilder filaIncompleta = new StringBuilder();
+            int idHashtag = 0;
+
+            //StringBuilder filaIncompleta = new StringBuilder();
+            String filaIncompleta = "";
+            String new_line;
+            String[] fields;
+            String[] fecha;
+            String fecha_str;
+            String[] hashtagSplit;
+            Hashtag[] hs;
+            Hashtag hh;
 
             while ((line = input.readLine()) != null) {// leo hasta salto de línea
-                String new_line = filaIncompleta + line;
-                String[] fields = parseCSVLine(new_line); // parseo campos por comillas
+                new_line = filaIncompleta.concat(line);
+                fields = p.split(new_line, -1); // parseo campos por comillas
                 if (fields.length == cantColumnas && cantComillasPar(new_line)) {
-                    filaIncompleta.setLength(0);
+                    filaIncompleta = "";
+                    // USUARIOS ------------
                     try {
                         u = usuarios.get(fields[1]);
                     } catch (Exception ex) {
@@ -58,18 +70,31 @@ public class Main {
                         usuarios.put(fields[1], u);
                         idUsuario++;
                     }
-                    String[] fecha;
+                    // FIN USUARIOS ------------
+                    // FECHAS ------------
                     try {
-                        String fecha_str = fields[9].split(" ", 0)[0];
+                        fecha_str = fields[9].split(" ", 0)[0];
                         fecha = fecha_str.split("-", -1);
                     } catch (Exception e) {
                         fecha = new String[]{"", "", ""};
                     }
-                    Tweet tw = new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], fecha, Boolean.parseBoolean(fields[13]), u);
-                    tweets.add(tw);
-                    //System.out.println(fields[0]);
+                    // FIN FECHAS ------------
+                    // HASHTAGS ------------
+                    hashtagSplit = fields[11].replaceAll("(\\s+|'|\"|\\[|\\])", "").split(",", 1);
+                    hs = new Hashtag[hashtagSplit.length];
+                    for (int i = 0; i < hashtagSplit.length; i++) {
+                        try {
+                            hh = hashtags.get(hashtagSplit[i]);
+                        } catch (Exception e) {
+                            hh = new Hashtag(idHashtag, hashtagSplit[i]);
+                            idHashtag++;
+                        }
+                        hs[i] = hh;
+                    }
+                    // HASHTAGS ------------
+                    tweets.add(new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], fecha, Boolean.parseBoolean(fields[13]), u, hs));
                 } else {
-                    filaIncompleta.append(line);
+                    filaIncompleta = filaIncompleta.concat(line);
                 }
             }
             input.close();
@@ -86,20 +111,9 @@ public class Main {
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
-//        search10MostActivePilots("2021", "12");
-        search15UsersMostTweets();
+//        search10MostActivePilots("2021", "11");
+//        search15UsersMostTweets();
         menu();
-    }
-
-    public static String[] parseCSVLine(String line) {
-        // Create a pattern to match breaks
-        // Split input with the pattern
-        String[] fields = p.split(line, -1);
-        for (int i = 0; i < fields.length; i++) {
-            // Get rid of residual double quotes
-            fields[i] = fields[i].replace("\"", "");
-        }
-        return fields;
     }
 
     private static boolean cantComillasPar(String line) {

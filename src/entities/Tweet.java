@@ -6,6 +6,8 @@ public class Tweet {
     private String source;
     private String[] date;
     private boolean isRetweet;
+
+    private Hashtag[] hashtags;
     private User usuario;
 
     public Tweet(long id, String content, String source, String[] date, boolean isRetweet) {
@@ -16,13 +18,14 @@ public class Tweet {
         this.isRetweet = isRetweet;
     }
 
-    public Tweet(long id, String content, String source, String[] date, boolean isRetweet, User usuario) {
+    public Tweet(long id, String content, String source, String[] date, boolean isRetweet, User usuario, Hashtag[] hashtag) {
         this.id = id;
         this.content = content;
         this.source = source;
         this.date = date;
         this.isRetweet = isRetweet;
         this.usuario = usuario;
+        this.hashtags = hashtag;
     }
 
     public String[] getDate() {
@@ -73,4 +76,11 @@ public class Tweet {
         this.usuario = usuario;
     }
 
+    public Hashtag[] getHashtags() {
+        return hashtags;
+    }
+
+    public void setHashtags(Hashtag[] hashtags) {
+        this.hashtags = hashtags;
+    }
 }
