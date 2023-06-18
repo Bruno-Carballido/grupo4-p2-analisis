@@ -6,8 +6,15 @@ import uy.edu.um.prog2.adt.LinkedListImpl;
 public class User {
     private long id;
     private String name;
-
     private boolean verificado;
+    private double favourite;
+
+    public User(long id, String name, boolean verificado, double favourite) {
+        this.id = id;
+        this.name = name;
+        this.verificado = verificado;
+        this.favourite = favourite;
+    }
 
     public User(long id, String name, boolean verificado) {
         this.id = id;
@@ -37,5 +44,13 @@ public class User {
 
     public void setVerificado(boolean verificado) {
         this.verificado = verificado;
+    }
+
+    public double getFavourite() {
+        return favourite;
+    }
+
+    public void setFavourite(double favourite) {
+        this.favourite = favourite;
     }
 }

@@ -5,6 +5,7 @@ import uy.edu.um.prog2.adt.Hash;
 import uy.edu.um.prog2.adt.HashImpl;
 import uy.edu.um.prog2.adt.LinkedList;
 import uy.edu.um.prog2.adt.LinkedListImpl;
+import uy.edu.um.prog2.adt.exceptions.DatosIncorrectos;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -37,7 +38,7 @@ public class Main {
             }
             // Fin carga de pilotos ------------
 
-            BufferedReader input = new BufferedReader(new FileReader("obligatorio2023/f1_dataset.csv"));
+            BufferedReader input = new BufferedReader(new FileReader("obligatorio2023/f1_dataset_test.csv"));
             String[] rows = input.readLine().split(",");
             line = null;
             int cantColumnas = rows.length;
@@ -66,7 +67,8 @@ public class Main {
                     try {
                         u = usuarios.get(fields[1]);
                     } catch (Exception ex) {
-                        u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]));
+                        u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]), Double.parseDouble(fields[7]));
+                        //u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]));
                         usuarios.put(fields[1], u);
                         idUsuario++;
                     }
@@ -220,8 +222,31 @@ public class Main {
             throw new RuntimeException(e);
         }
     }
+    public static void top7WithMoreFavourite (){
 
-    public static void menu() {
+    }
+    public static int countTweetsWithWord() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Ingrese la palabra a buscar: ");
+        String word = scanner.nextLine().toLowerCase();
+        System.out.println("------------------------");
+        int contador = 0;
+        int n = tweets.size();
+        for (int i = 0; i < n; i++) {
+            Tweet tweet;
+            try {
+                tweet = tweets.get(i);
+                if (tweet.getContent().toLowerCase().contains(word)) {
+                    contador++;
+                }
+            } catch (DatosIncorrectos e) {
+                throw new RuntimeException(e);
+            }
+        }
+        System.out.println(contador);
+        return contador;
+    }
+            public static void menu() {
         System.out.println("Menú principal");
         System.out.println("Seleccione la opción del menú: ");
         System.out.println("    1. Listar los 10 pilotos activos en la temporada 2023 más mencionados en los tweets en un mes");
@@ -247,7 +272,7 @@ public class Main {
         } else if (numero == 5) {
             System.out.println("Hola, opción 5");
         } else if (numero == 6) {
-            System.out.println("Hola, opción 6");
+            System.out.println(countTweetsWithWord());
         } else if (numero == 7) {
             System.out.println("Opción 7, finaliza el programa");
 
