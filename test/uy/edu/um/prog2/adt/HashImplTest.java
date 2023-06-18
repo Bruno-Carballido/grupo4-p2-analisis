@@ -16,10 +16,11 @@ public class HashImplTest {
 
     @Test
     public void testPutAndGet() {
-        hash.put(10, "Ajo");
-        hash.put(18, "Queso");
-        hash.put(67, "Pan");
         try {
+            hash.put(10, "Ajo");
+            hash.put(18, "Queso");
+            hash.put(67, "Pan");
+
             assertEquals("Ajo", hash.get(10));
             assertEquals("Queso", hash.get(18));
             assertEquals("Pan", hash.get(67));
@@ -30,9 +31,13 @@ public class HashImplTest {
 
     @Test
     public void testRemove() {
-        hash.put(10, "Ajo");
-        hash.put(18, "Queso");
-        hash.put(67, "Pan");
+        try {
+            hash.put(10, "Ajo");
+            hash.put(18, "Queso");
+            hash.put(67, "Pan");
+        } catch (EmptyHashException e) {
+            throw new RuntimeException(e);
+        }
 
         hash.remove(18);
 
@@ -43,8 +48,12 @@ public class HashImplTest {
     public void testSize() {
         assertEquals(0, hash.size());
 
-        hash.put(10, "Ajo");
-        hash.put(18, "Queso");
+        try {
+            hash.put(10, "Ajo");
+            hash.put(18, "Queso");
+        } catch (EmptyHashException e) {
+            throw new RuntimeException(e);
+        }
 
         assertEquals(2, hash.size());
     }
