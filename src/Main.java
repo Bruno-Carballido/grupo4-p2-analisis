@@ -7,7 +7,6 @@ import uy.edu.um.prog2.adt.LinkedListImpl;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.Objects;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -17,7 +16,6 @@ public class Main {
     private static String[] pilotosLista = new String[20];
 
     //    private static Hash<String, User> pilotos = new HashImpl<>(25);
-    private static LinkedList<String> usuariosLista = new LinkedListImpl<>();
 
     private static Hash<String, User> usuarios = new HashImpl<>(30000);
     private static LinkedList<Tweet> tweets = new LinkedListImpl<>();
@@ -39,7 +37,7 @@ public class Main {
             }
             // Fin carga de pilotos ------------
 
-            BufferedReader input = new BufferedReader(new FileReader("obligatorio2023/f1_dataset_test.csv"));
+            BufferedReader input = new BufferedReader(new FileReader("obligatorio2023/f1_dataset.csv"));
             String[] rows = input.readLine().split(",");
             line = null;
             int cantColumnas = rows.length;
@@ -58,7 +56,6 @@ public class Main {
                     } catch (Exception ex) {
                         u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]));
                         usuarios.put(fields[1], u);
-                        usuariosLista.add(fields[1]);
                         idUsuario++;
                     }
                     String[] fecha;
@@ -70,7 +67,6 @@ public class Main {
                     }
                     Tweet tw = new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], fecha, Boolean.parseBoolean(fields[13]), u);
                     tweets.add(tw);
-                    u.appendTweets(tw);
                     //System.out.println(fields[0]);
                 } else {
                     filaIncompleta.append(line);
@@ -164,28 +160,25 @@ public class Main {
         try {
             long start = System.currentTimeMillis();
 
-            String[] usuariosLst = new String[usuariosLista.size()];
-            Hash<String, Integer> userTweets = new HashImpl<>(13000);
+            String[] usuariosLst = new String[usuarios.size()];
+            Hash<String, Long> userTweets = new HashImpl<>(13000);
 
-            for (int i = 0; i < usuariosLista.size(); i++) {
-                User u = usuarios.get(usuariosLista.get(i));
-                userTweets.put(u.getName(), u.getTweets().size());
-                usuariosLst[i] = u.getName();
+            int indexUsu = 0;
+            for (int i = 0; i < tweets.size(); i++) {
+                Tweet t = tweets.get(i);
+                String nUsu = t.getUsuario().getName();
+                Long cant = 0L;
+                try {
+                    cant = userTweets.get(nUsu);
+                    userTweets.update(nUsu, cant + 1);
+                } catch (Exception ex) {
+                    userTweets.put(nUsu, 1L);
+                    usuariosLst[indexUsu] = nUsu;
+                    indexUsu++;
+                }
             }
 
-//            for (int i = 0; i < tweets.size(); i++) {
-//                Tweet t = tweets.get(i);
-//                String nUsu = t.getUsuario().getName();
-//                Long cant = 0L;
-//                try {
-//                    cant = userTweets.get(nUsu);
-//                    userTweets.update(nUsu, cant + 1);
-//                } catch (Exception ex) {
-//                    userTweets.put(nUsu, 1L);
-//                }
-//            }
-
-            int n = usuariosLista.size();
+            int n = usuariosLst.length;
 
             for (int i = 0; i < n - 1; i++) {
                 for (int j = 0; j < n - i - 1; j++) {
@@ -195,13 +188,12 @@ public class Main {
                         usuariosLst[j + 1] = temp;
                     }
                 }
-                if (i < 15){
+                if (i < 15) {
                     System.out.println(usuariosLst[n - i - 1]);
                     System.out.printf("\t%s Tweets\n\tVerificado: %s%n",
                             userTweets.get(usuariosLst[n - i - 1]),
                             usuarios.get(usuariosLst[n - i - 1]).isVerificado() ? "Si" : "No");
-                }
-                else break;
+                } else break;
             }
 
 
