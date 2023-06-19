@@ -3,6 +3,8 @@ package uy.edu.um.prog2.adt;
 import uy.edu.um.prog2.adt.exceptions.EmptyHashException;
 
 
+
+
 public class HashImpl<K extends Comparable<K>, T> implements Hash<K, T> {
     private static final int INITIAL_CAPACITY = 10;
     private static final double LOAD_FACTOR = 0.75;
@@ -114,4 +116,6 @@ public class HashImpl<K extends Comparable<K>, T> implements Hash<K, T> {
         }
         array = newArray;
     }
+
+
 }

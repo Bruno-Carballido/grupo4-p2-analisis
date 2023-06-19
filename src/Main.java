@@ -5,9 +5,12 @@ import uy.edu.um.prog2.adt.Hash;
 import uy.edu.um.prog2.adt.HashImpl;
 import uy.edu.um.prog2.adt.LinkedList;
 import uy.edu.um.prog2.adt.LinkedListImpl;
+import uy.edu.um.prog2.adt.exceptions.DatosIncorrectos;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+
+
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -16,6 +19,7 @@ public class Main {
     private static Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
     private static String[] pilotosLista = new String[20];
     private static Hash<String, User> usuarios = new HashImpl<>(30000);
+    private static LinkedListImpl<User> usuariosLista = new LinkedListImpl<>();
     private static LinkedList<Tweet> tweets = new LinkedListImpl<>();
     private static Hash<String, Hashtag> hashtags = new HashImpl<>(1000);
 //    private static LinkedList<Hashtag> hashtags = new LinkedListImpl<>();
@@ -75,6 +79,7 @@ public class Main {
                         u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]), fav);
                         //u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]));
                         usuarios.put(fields[1], u);
+                        usuariosLista.add(u);
                         idUsuario++;
                     }
                     // FIN USUARIOS ------------
@@ -120,7 +125,11 @@ public class Main {
         }
 //        search10MostActivePilots("2021", "11");
 //        search15UsersMostTweets();
-        menu();
+        try {
+            menu();
+        } catch (DatosIncorrectos e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static boolean cantComillasPar(String line) {
@@ -227,11 +236,37 @@ public class Main {
             throw new RuntimeException(e);
         }
     }
+public static String top7WithMoreFavourite(LinkedListImpl<User> usuariosLista, int count) throws DatosIncorrectos {
+    if (usuariosLista.isEmpty()) {
+        throw new DatosIncorrectos();}
+    // Obtener los 7 usuarios con más favoritos
+    User[] topUsers = new User[Math.min(usuariosLista.size(), count)];
+    for (int i = 0; i < topUsers.length; i++) {
+        User maxUser = null;
+        double maxFavourites = Integer.MIN_VALUE;
+        // Encontrar el usuario con más favoritos en cada iteración
+        for (int j = 0; j < usuariosLista.size(); j++) {
+            User user = usuariosLista.get(j);
+            if (user.getFavourite() > maxFavourites && !containsUser(topUsers, user)) {
+                maxUser = user;
+                maxFavourites = user.getFavourite();}
+        }
+        topUsers[i] = maxUser;}
+    // Obtener los nombres de los usuarios con más favoritos
+    LinkedListImpl<User> usuariosFavoritos = new LinkedListImpl<>();
+    for (User user : topUsers) {
+        usuariosFavoritos.add(new User(user.getId(),user.getName(),user.isVerificado(), user.getFavourite()));}
+    return usuariosFavoritos.toString();
+}
 
-    public static void top7WithMoreFavourite() {
-
+private static boolean containsUser(User[] users, User user) {
+        boolean flag = false;
+        for (User u : users) {
+            if (u != null && u.equals(user)) {
+                flag = true;}
+        }
+        return flag;
     }
-
     public static int countTweetsWithWord() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Ingrese la palabra a buscar: ");
@@ -254,7 +289,7 @@ public class Main {
         return contador;
     }
 
-    public static void menu() {
+    public static void menu() throws DatosIncorrectos {
         System.out.println("Menú principal");
         System.out.println("Seleccione la opción del menú: ");
         System.out.println("    1. Listar los 10 pilotos activos en la temporada 2023 más mencionados en los tweets en un mes");
@@ -278,7 +313,7 @@ public class Main {
         } else if (numero == 4) {
             System.out.println("Hola, opción 4");
         } else if (numero == 5) {
-            System.out.println("Hola, opción 5");
+            System.out.println(top7WithMoreFavourite(usuariosLista, 7));
         } else if (numero == 6) {
             System.out.println(countTweetsWithWord());
         } else if (numero == 7) {
@@ -287,6 +322,5 @@ public class Main {
         } else {
             System.out.println("Opción inválida");
         }
-
     }
 }

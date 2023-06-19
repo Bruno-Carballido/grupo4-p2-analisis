@@ -53,4 +53,12 @@ public class User {
     public void setFavourite(double favourite) {
         this.favourite = favourite;
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "name='" + name + '\'' +
+                ", favourite=" + favourite +
+                '}';
+    }
 }
