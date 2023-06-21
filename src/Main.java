@@ -77,7 +77,6 @@ public class Main {
                             fav = 0d;
                         }
                         u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]), fav);
-                        //u = new User(idUsuario, fields[1], Boolean.parseBoolean(fields[8]));
                         usuarios.put(fields[1], u);
                         usuariosLista.add(u);
                         idUsuario++;
@@ -207,9 +206,7 @@ public class Main {
                     indexUsu++;
                 }
             }
-
             int n = usuariosLst.length;
-
             for (int i = 0; i < n - 1; i++) {
                 for (int j = 0; j < n - i - 1; j++) {
                     if (userTweets.get(usuariosLst[j]) > userTweets.get(usuariosLst[j + 1])) {
@@ -225,8 +222,6 @@ public class Main {
                             usuarios.get(usuariosLst[n - i - 1]).isVerificado() ? "Si" : "No");
                 } else break;
             }
-
-
             long finish = System.currentTimeMillis();
             long timeElapsed = finish - start;
             System.out.println("------------------------");
@@ -236,6 +231,78 @@ public class Main {
             throw new RuntimeException(e);
         }
     }
+
+    public static String mostUsedHashtag(Integer year, Integer month, Integer day) throws DatosIncorrectos {
+       if (year > 2022 || year < 2021) {
+            throw new DatosIncorrectos();}
+        if (month > 12 || month < 1) {
+            throw new DatosIncorrectos();}
+        if (day > 31 || day < 1) {
+            throw new DatosIncorrectos();}
+        Integer [] fecha =new Integer[3];
+        fecha[0]=year;
+        fecha[1]= month;
+        fecha[2]= day;
+        String result = null;
+        LinkedListImpl<Hashtag[]> lista_hashtag= new LinkedListImpl<>();
+        if (((year < 2022) || (year == 2022 && month < 8) || (year == 2022 && month == 8 && day < 31))&&((year > 2021) || (year == 2021 && month > 7) || (year == 2021 && month == 7 && day > 1))) {
+            for (int i = 0; i < tweets.size(); i++) {
+                Tweet tweet = tweets.get(i);
+                try {
+                    Integer tweetYear = Integer.parseInt(tweet.getDate()[0]);
+                    Integer tweetMonth = Integer.parseInt(tweet.getDate()[1]);
+                    Integer tweetDay = Integer.parseInt(tweet.getDate()[2]);
+
+                    if (tweetYear.equals(year) && tweetMonth.equals(month) && tweetDay.equals(day)) {
+                        lista_hashtag.add(tweet.getHashtags());
+                    }
+                } catch (NumberFormatException e) {
+                }
+            }
+        }else { throw new DatosIncorrectos();}
+        LinkedListImpl<String> hashtagList = new LinkedListImpl<>();
+        LinkedListImpl<Integer> countList = new LinkedListImpl<>();
+        for (int i = 0; i < lista_hashtag.size(); i++) {
+            Hashtag[] hashtags = lista_hashtag.get(i);
+            for (Hashtag hashtag : hashtags) {
+                String tag = hashtag.getText().toLowerCase();
+                if (!tag.equalsIgnoreCase("F1")) {
+                    int index = hashtagList.indexOf(tag);
+                    if (index != -1) {
+                        int count = countList.get(index);
+                        countList.remove(index);
+                        countList.add(count + 1);
+                    } else {
+                        hashtagList.add(tag);
+                        countList.add(1);
+                    }
+                }
+            }
+        }// Encontrar el hashtag más usado
+        String mostUsedHashtag = "";
+        int maxCount = 0;
+        int listSize = hashtagList.size();
+        for (int i = 0; i < listSize; i++) {
+            String tag = hashtagList.get(i);
+            int count = countList.get(i);
+            if (count > maxCount) {
+                mostUsedHashtag = tag;
+                maxCount = count;
+            }
+        }
+        String[] ht = mostUsedHashtag.split(",");
+        for (int p = 0; p < ht.length; p++) {
+            if (ht[p] != "f1") {
+                result = ht[p];
+            }
+            if (ht.length == 1 && ht[p] == "") {
+                result = null;
+            }
+        }
+        return result;
+    }
+
+
 public static String top7WithMoreFavourite(LinkedListImpl<User> usuariosLista, int count) throws DatosIncorrectos {
     if (usuariosLista.isEmpty()) {
         throw new DatosIncorrectos();}
@@ -311,7 +378,7 @@ private static boolean containsUser(User[] users, User user) {
         } else if (numero == 3) {
             System.out.println("Hola, opción 3");
         } else if (numero == 4) {
-            System.out.println("Hola, opción 4");
+            System.out.println(mostUsedHashtag(2021, 12, 12));
         } else if (numero == 5) {
             System.out.println(top7WithMoreFavourite(usuariosLista, 7));
         } else if (numero == 6) {

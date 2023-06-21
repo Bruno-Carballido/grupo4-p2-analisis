@@ -78,4 +78,38 @@ public class LinkedListImplTest {
         assertEquals(1, linkedList.size());
 
     }
+
+
+    @Test
+    public void isEmpty() {
+        assertTrue(linkedList.isEmpty());
+
+        linkedList.add("hola");
+        assertFalse(linkedList.isEmpty());
+
+        linkedList.remove("hola");
+        assertTrue(list.isEmpty());
+    }
+
+
+    @Test
+    public void testToString() {
+        linkedList.add("Hello");
+        linkedList.add("World");
+        linkedList.add("!");
+
+        assertEquals("Hello -> World -> !", linkedList.toString());
+    }
+
+    @Test
+    public void indexOf() {
+        linkedList.add("Apple");
+        linkedList.add("Banana");
+        linkedList.add("Orange");
+        linkedList.add("Mango");
+        assertTrue(linkedList.contains("Banana"));
+        System.out.println(linkedList);
+        assertEquals(-1, linkedList.indexOf("Banana"));
+        assertEquals(-1, linkedList.indexOf("Grapes"));
+    }
 }

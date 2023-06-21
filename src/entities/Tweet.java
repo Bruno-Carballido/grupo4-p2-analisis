@@ -1,5 +1,7 @@
 package entities;
 
+import java.util.Arrays;
+
 public class Tweet {
     private long id;
     private String content;
@@ -84,5 +86,23 @@ public class Tweet {
         this.hashtags = hashtags;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Tweet tweet = (Tweet) o;
+        return Arrays.equals(date, tweet.date);
+    }
 
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(date);
+    }
+
+    @Override
+    public String toString() {
+        return "Tweet{" +
+                "date=" + Arrays.toString(date) +
+                '}';
+    }
 }

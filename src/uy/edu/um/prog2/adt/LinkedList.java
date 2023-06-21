@@ -6,7 +6,6 @@ public interface LinkedList<T> {
 
     void add(T value);
 
-    void addFirst(T value);
 
     T get(int position) throws DatosIncorrectos;
 
@@ -17,4 +16,6 @@ public interface LinkedList<T> {
     int size();
 
     boolean isEmpty();
+
+    int indexOf(T element);
 }

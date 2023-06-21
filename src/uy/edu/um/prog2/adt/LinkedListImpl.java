@@ -27,20 +27,6 @@ public class LinkedListImpl<T> implements LinkedList<T> {
         this.last = elementToAdd;
         this.size++;
     }
-    @Override
-    public void addFirst(T value) {
-        Node<T> newNode = new Node<>(value); // Crear el nuevo nodo
-
-        if (this.first== null && this.last==null) { // Si la lista está vacía
-            first = newNode; // Establecer el nuevo nodo como el primer elemento
-            last = newNode; // Establecer el nuevo nodo como el último elemento
-        } else {
-            newNode.setNext(first); // Establecer el siguiente nodo del nuevo nodo como el nodo actualmente en el primer lugar
-            first = newNode; // Establecer el nuevo nodo como el primer elemento
-        }
-
-        size++; // Incrementar el tamaño de la lista
-    }
 
     @Override
     public T get(int position) throws DatosIncorrectos {
@@ -134,6 +120,31 @@ public class LinkedListImpl<T> implements LinkedList<T> {
         sb.append("null");
         return sb.toString();
     }
+
+    @Override
+    public int indexOf(T element) {
+        Node<T> current = first;
+        int index = 0;
+
+        while (current != null) {
+            if (current.equals(element)) {
+                return index;
+            }
+            current = current.getNext();
+            index++;
+        }
+
+        return -1; // El elemento no se encontró en la lista
+    }
+
+
+
+
+
+
+
+
+
 
 }
 

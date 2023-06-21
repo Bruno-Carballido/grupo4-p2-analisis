@@ -27,5 +27,11 @@ public class Hashtag {
         this.text = text;
     }
 
-
+    @Override
+    public String toString() {
+        return "Hashtag{" +
+                "id=" + id +
+                ", text='" + text + '\'' +
+                '}';
+    }
 }
