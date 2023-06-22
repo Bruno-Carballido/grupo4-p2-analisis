@@ -1,17 +1,16 @@
 package entities;
 
-import java.util.Arrays;
+import java.time.LocalDate;
 
 public class Tweet {
     private long id;
     private String content;
     private String source;
-    private String[] date;
+    private LocalDate date;
     private boolean isRetweet;
-    private Hashtag[] hashtags;
     private User usuario;
 
-    public Tweet(long id, String content, String source, String[] date, boolean isRetweet) {
+    public Tweet(long id, String content, String source, LocalDate date, boolean isRetweet) {
         this.id = id;
         this.content = content;
         this.source = source;
@@ -19,22 +18,21 @@ public class Tweet {
         this.isRetweet = isRetweet;
     }
 
-    public Tweet(long id, String content, String source, String[] date, boolean isRetweet, User usuario, Hashtag[] hashtag) {
+    public Tweet(long id, String content, String source, LocalDate date, boolean isRetweet, User usuario) {
         this.id = id;
         this.content = content;
         this.source = source;
         this.date = date;
         this.isRetweet = isRetweet;
         this.usuario = usuario;
-        this.hashtags = hashtag;
 
     }
 
-    public String[] getDate() {
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(String[] date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
 
@@ -78,31 +76,23 @@ public class Tweet {
         this.usuario = usuario;
     }
 
-    public Hashtag[] getHashtags() {
-        return hashtags;
-    }
-
-    public void setHashtags(Hashtag[] hashtags) {
-        this.hashtags = hashtags;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Tweet tweet = (Tweet) o;
-        return Arrays.equals(date, tweet.date);
+        return date.equals(tweet.date);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(date);
+        return date.hashCode();
     }
 
     @Override
     public String toString() {
         return "Tweet{" +
-                "date=" + Arrays.toString(date) +
+                "date=" + date.toString() +
                 '}';
     }
 }

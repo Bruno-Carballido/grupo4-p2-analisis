@@ -6,7 +6,7 @@ public interface Heap<K extends Comparable<K>, T> {
 
     void insert(K key, T value);
 
-    void delete() throws EmptyHeapException;
+    T delete() throws EmptyHeapException;
 
     T getMaxValue();
 

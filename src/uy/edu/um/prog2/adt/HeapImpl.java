@@ -50,13 +50,15 @@ public class HeapImpl<K extends Comparable<K>, T> implements Heap<K, T> {
     }
 
     @Override
-    public void delete() throws EmptyHeapException {
+    public T delete() throws EmptyHeapException {
         if (size() == 0)
             throw new EmptyHeapException();
+        T max = (T) heap[0].getValue();
         swap(0, size - 1);
         heap[size - 1] = null;
         size--;
         moveNodeDown(0);
+        return max;
     }
 
 

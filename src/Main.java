@@ -1,16 +1,13 @@
 import entities.Hashtag;
 import entities.Tweet;
 import entities.User;
-import uy.edu.um.prog2.adt.Hash;
-import uy.edu.um.prog2.adt.HashImpl;
-import uy.edu.um.prog2.adt.LinkedList;
-import uy.edu.um.prog2.adt.LinkedListImpl;
+import uy.edu.um.prog2.adt.*;
 import uy.edu.um.prog2.adt.exceptions.DatosIncorrectos;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-
-
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -18,11 +15,11 @@ public class Main {
 
     private static Pattern p = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
     private static String[] pilotosLista = new String[20];
-    private static Hash<String, User> usuarios = new HashImpl<>(30000);
+    private static Hash<String, User> usuarios = new HashImpl<>(80000);
     private static LinkedListImpl<User> usuariosLista = new LinkedListImpl<>();
     private static LinkedList<Tweet> tweets = new LinkedListImpl<>();
-    private static Hash<String, Hashtag> hashtags = new HashImpl<>(1000);
-//    private static LinkedList<Hashtag> hashtags = new LinkedListImpl<>();
+    private static Hash<String, Hashtag> hashtags = new HashImpl<>(10000);
+    private static LinkedList<String> hashtagsLista = new LinkedListImpl<>();
 
 
     public static void main(String[] args) {
@@ -55,17 +52,18 @@ public class Main {
             String filaIncompleta = "";
             String new_line;
             String[] fields;
-            String[] fecha;
-            String fecha_str;
+            LocalDate fecha;
+            String fechaStr;
+            String[] fStrSpli;
             String[] hashtagSplit;
-            Hashtag[] hs;
             Hashtag hh;
             Double fav;
+            Tweet tw;
 
             while ((line = input.readLine()) != null) {// leo hasta salto de línea
                 new_line = filaIncompleta.concat(line);
-                fields = p.split(new_line, -1); // parseo campos por comillas
-                if (fields.length == cantColumnas && cantComillasPar(new_line)) {
+                fields = p.split(new_line, -1); // parseo campos por comas
+                if (fields.length == cantColumnas && fields[0].length() <= 6) {
                     filaIncompleta = "";
                     // USUARIOS ------------
                     try {
@@ -84,26 +82,29 @@ public class Main {
                     // FIN USUARIOS ------------
                     // FECHAS ------------
                     try {
-                        fecha_str = fields[9].split(" ", 0)[0];
-                        fecha = fecha_str.split("-", -1);
+                        fechaStr = fields[9].split(" ", 0)[0];
+                        fStrSpli = fechaStr.split("-", -1);
+                        fecha = LocalDate.of(Integer.parseInt(fStrSpli[0]), Integer.parseInt(fStrSpli[1]), Integer.parseInt(fStrSpli[2]));
                     } catch (Exception e) {
-                        fecha = new String[]{"", "", ""};
+                        fecha = null;
                     }
                     // FIN FECHAS ------------
+                    tw = new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], fecha, Boolean.parseBoolean(fields[13]), u);
+                    tweets.add(tw);
                     // HASHTAGS ------------
-                    hashtagSplit = fields[11].replaceAll("(\\s+|'|\"|\\[|\\])", "").split(",", 1);
-                    hs = new Hashtag[hashtagSplit.length];
+                    hashtagSplit = fields[11].replaceAll("(\\s+|'|\"|\\[|\\])", "").split(",", -1);
                     for (int i = 0; i < hashtagSplit.length; i++) {
                         try {
                             hh = hashtags.get(hashtagSplit[i]);
                         } catch (Exception e) {
                             hh = new Hashtag(idHashtag, hashtagSplit[i]);
+                            hashtagsLista.add(hashtagSplit[i]);
+                            hashtags.put(hashtagSplit[i], hh);
                             idHashtag++;
                         }
-                        hs[i] = hh;
+                        hh.addTweets(tw);
                     }
                     // HASHTAGS ------------
-                    tweets.add(new Tweet(Long.parseLong(fields[0]), fields[10], fields[12], fecha, Boolean.parseBoolean(fields[13]), u, hs));
                 } else {
                     filaIncompleta = filaIncompleta.concat(line);
                 }
@@ -116,18 +117,12 @@ public class Main {
             System.out.println("------------------------");
             System.out.printf("%s %s%n", "Cantidad de Tweets:", tweets.size());
             System.out.printf("%s %s%n", "Cantidad de usuarios:", idUsuario);
-            System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
+            System.out.printf("%s %s%s%n", "Tiempo de carga:", timeElapsed, "ms");
             System.out.println("------------------------");
 
+            menu();
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
-        }
-//        search10MostActivePilots("2021", "11");
-//        search15UsersMostTweets();
-        try {
-            menu();
-        } catch (DatosIncorrectos e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -135,7 +130,8 @@ public class Main {
         return (line.length() - line.replace("\"", "").length()) % 2 == 0;
     }
 
-    private static void search10MostActivePilots(String anio, String mes) {
+    private static void search10MostActivePilots(Integer anio, Integer mes) {
+        System.out.println("\f");
         System.out.println("------------------------");
         try {
             long start = System.currentTimeMillis();
@@ -145,16 +141,20 @@ public class Main {
                 pilotosMentions.put(piloto, 0L);
             }
 
+            long mencionesAnteriores;
+            String[] pilotoSpl;
+
             for (int i = 0; i < tweets.size(); i++) {
                 Tweet t = tweets.get(i);
-                String[] f = t.getDate();
+                LocalDate f = t.getDate();
                 String contenidoTweets = t.getContent();
-                if (f[0].equals(anio) && f[1].equals(mes)) {
+                if (f != null && YearMonth.from(f).equals(YearMonth.of(anio, mes))) {
                     for (String piloto : pilotosLista) {
                         // long cant_menciones = (contenidoTweets.length() - (contenidoTweets.replaceAll(piloto, "").length())) / piloto.length();
-                        long menciones_anteriores = pilotosMentions.get(piloto);
+                        mencionesAnteriores = pilotosMentions.get(piloto);
+                        pilotoSpl = piloto.split(" ", -1);
                         // pilotosMentions.update(piloto, menciones_anteriores + cant_menciones);
-                        pilotosMentions.update(piloto, menciones_anteriores + (contenidoTweets.contains(piloto) ? 1 : 0));
+                        pilotosMentions.update(piloto, mencionesAnteriores + ((contenidoTweets.contains(pilotoSpl[0]) || (contenidoTweets.contains(pilotoSpl[pilotoSpl.length - 1])) ? 1 : 0)));
                     }
                 }
             }
@@ -185,6 +185,7 @@ public class Main {
     }
 
     private static void search15UsersMostTweets() {
+        System.out.println("\f");
         System.out.println("------------------------");
         try {
             long start = System.currentTimeMillis();
@@ -232,113 +233,128 @@ public class Main {
         }
     }
 
-    public static String mostUsedHashtag(Integer year, Integer month, Integer day) throws DatosIncorrectos {
-       if (year > 2022 || year < 2021) {
-            throw new DatosIncorrectos();}
-        if (month > 12 || month < 1) {
-            throw new DatosIncorrectos();}
-        if (day > 31 || day < 1) {
-            throw new DatosIncorrectos();}
-        Integer [] fecha =new Integer[3];
-        fecha[0]=year;
-        fecha[1]= month;
-        fecha[2]= day;
-        String result = null;
-        LinkedListImpl<Hashtag[]> lista_hashtag= new LinkedListImpl<>();
-        if (((year < 2022) || (year == 2022 && month < 8) || (year == 2022 && month == 8 && day < 31))&&((year > 2021) || (year == 2021 && month > 7) || (year == 2021 && month == 7 && day > 1))) {
-            for (int i = 0; i < tweets.size(); i++) {
-                Tweet tweet = tweets.get(i);
-                try {
-                    Integer tweetYear = Integer.parseInt(tweet.getDate()[0]);
-                    Integer tweetMonth = Integer.parseInt(tweet.getDate()[1]);
-                    Integer tweetDay = Integer.parseInt(tweet.getDate()[2]);
+    public static void distictCantHashtagsDay(Integer year, Integer month, Integer day) throws DatosIncorrectos {
+        System.out.println("\f");
+        System.out.println("------------------------");
+        long start = System.currentTimeMillis();
 
-                    if (tweetYear.equals(year) && tweetMonth.equals(month) && tweetDay.equals(day)) {
-                        lista_hashtag.add(tweet.getHashtags());
-                    }
-                } catch (NumberFormatException e) {
-                }
-            }
-        }else { throw new DatosIncorrectos();}
-        LinkedListImpl<String> hashtagList = new LinkedListImpl<>();
-        LinkedListImpl<Integer> countList = new LinkedListImpl<>();
-        for (int i = 0; i < lista_hashtag.size(); i++) {
-            Hashtag[] hashtags = lista_hashtag.get(i);
-            for (Hashtag hashtag : hashtags) {
-                String tag = hashtag.getText().toLowerCase();
-                if (!tag.equalsIgnoreCase("F1")) {
-                    int index = hashtagList.indexOf(tag);
-                    if (index != -1) {
-                        int count = countList.get(index);
-                        countList.remove(index);
-                        countList.add(count + 1);
-                    } else {
-                        hashtagList.add(tag);
-                        countList.add(1);
+        LinkedList<Hashtag> hashtagsDay = new LinkedListImpl<>();
+
+        Hashtag h;
+        LinkedList<Tweet> tweetsHashtag;
+        LocalDate fechaComparar = LocalDate.of(year, month, day);
+        LocalDate f;
+        for (int i = 0; i < hashtagsLista.size(); i++) {
+            try {
+                h = hashtags.get(hashtagsLista.get(i));
+                tweetsHashtag = h.getTweets();
+                for (int j = 0; j < tweetsHashtag.size(); j++) {
+                    f = tweetsHashtag.get(j).getDate();
+                    if (f != null && f.equals(fechaComparar)) {
+                        hashtagsDay.add(h);
+                        break;
                     }
                 }
-            }
-        }// Encontrar el hashtag más usado
-        String mostUsedHashtag = "";
-        int maxCount = 0;
-        int listSize = hashtagList.size();
-        for (int i = 0; i < listSize; i++) {
-            String tag = hashtagList.get(i);
-            int count = countList.get(i);
-            if (count > maxCount) {
-                mostUsedHashtag = tag;
-                maxCount = count;
+            } catch (Exception e) {
+                System.out.println(e);
             }
         }
-        String[] ht = mostUsedHashtag.split(",");
-        for (int p = 0; p < ht.length; p++) {
-            if (ht[p] != "f1") {
-                result = ht[p];
-            }
-            if (ht.length == 1 && ht[p] == "") {
-                result = null;
+
+        long finish = System.currentTimeMillis();
+        long timeElapsed = finish - start;
+        System.out.printf("%s %d-%d-%d: %s%n", "Cantidad de hashtags diferentes para el día", year, month, day, hashtagsDay.size());
+        System.out.println("------------------------");
+        System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
+        System.out.println("------------------------");
+    }
+
+    public static void mostUsedHashtag(Integer year, Integer month, Integer day) throws DatosIncorrectos {
+        long start = System.currentTimeMillis();
+
+        Heap<Long, String> hashtagsFechas = new HeapImpl<>();
+
+        Hashtag h;
+        LinkedList<Tweet> tweetsHashtag;
+        Long cantTweets = 0L;
+        LocalDate fechaComparar = LocalDate.of(year, month, day);
+        LocalDate f;
+        for (int i = 0; i < hashtagsLista.size(); i++) {
+            try {
+                h = hashtags.get(hashtagsLista.get(i));
+                if (h.getText() != "#F1") {
+                    tweetsHashtag = h.getTweets();
+                    for (int j = 0; j < tweetsHashtag.size(); j++) {
+                        f = tweetsHashtag.get(j).getDate();
+                        if (f != null && f.equals(fechaComparar)) {
+                            cantTweets++;
+                        }
+                    }
+                    hashtagsFechas.insert(cantTweets, h.getText());
+                }
+            } catch (Exception e) {
+                System.out.println(e);
             }
         }
-        return result;
+
+        long finish = System.currentTimeMillis();
+        long timeElapsed = finish - start;
+        System.out.printf("Hashtag más usado para el día %d-%d-%d: %s%n", year, month, day, hashtagsFechas.getMaxValue());
+        System.out.println("------------------------");
+        System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
+        System.out.println("------------------------");
     }
 
 
-public static String top7WithMoreFavourite(LinkedListImpl<User> usuariosLista, int count) throws DatosIncorrectos {
-    if (usuariosLista.isEmpty()) {
-        throw new DatosIncorrectos();}
-    // Obtener los 7 usuarios con más favoritos
-    User[] topUsers = new User[Math.min(usuariosLista.size(), count)];
-    for (int i = 0; i < topUsers.length; i++) {
-        User maxUser = null;
-        double maxFavourites = Integer.MIN_VALUE;
-        // Encontrar el usuario con más favoritos en cada iteración
-        for (int j = 0; j < usuariosLista.size(); j++) {
-            User user = usuariosLista.get(j);
-            if (user.getFavourite() > maxFavourites && !containsUser(topUsers, user)) {
-                maxUser = user;
-                maxFavourites = user.getFavourite();}
+    public static void top7WithMoreFavourite() throws DatosIncorrectos {
+        System.out.println("\f");
+        System.out.println("------------------------");
+        long start = System.currentTimeMillis();
+        if (usuariosLista.isEmpty()) {
+            throw new DatosIncorrectos();
         }
-        topUsers[i] = maxUser;}
-    // Obtener los nombres de los usuarios con más favoritos
-    LinkedListImpl<User> usuariosFavoritos = new LinkedListImpl<>();
-    for (User user : topUsers) {
-        usuariosFavoritos.add(new User(user.getId(),user.getName(),user.isVerificado(), user.getFavourite()));}
-    return usuariosFavoritos.toString();
-}
+        User[] topUsers = new User[7];
+        User maxUser = null;
+        for (int i = 0; i < topUsers.length; i++) {
+            double maxFavourites = Integer.MIN_VALUE;
+            // Encontrar el usuario con más favoritos en cada iteración
+            for (int j = 0; j < usuariosLista.size(); j++) {
+                User user = usuariosLista.get(j);
+                if (user.getFavourite() > maxFavourites && !containsUser(topUsers, user)) {
+                    maxUser = user;
+                    maxFavourites = user.getFavourite();
+                }
+            }
+            topUsers[i] = maxUser;
+        }
+        // Obtener los nombres de los usuarios con más favoritos
+        LinkedListImpl<User> usuariosFavoritos = new LinkedListImpl<>();
+        for (User user : topUsers) {
+            usuariosFavoritos.add(user);
+        }
 
-private static boolean containsUser(User[] users, User user) {
+        long finish = System.currentTimeMillis();
+        long timeElapsed = finish - start;
+        System.out.println(usuariosFavoritos.toString());
+        System.out.println("------------------------");
+        System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
+        System.out.println("------------------------");
+    }
+
+    private static boolean containsUser(User[] users, User user) {
         boolean flag = false;
         for (User u : users) {
             if (u != null && u.equals(user)) {
-                flag = true;}
+                flag = true;
+            }
         }
         return flag;
     }
-    public static int countTweetsWithWord() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Ingrese la palabra a buscar: ");
-        String word = scanner.nextLine().toLowerCase();
+
+    public static void countTweetsWithWord(String word) {
+        System.out.println("\f");
         System.out.println("------------------------");
+        long start = System.currentTimeMillis();
+
         int contador = 0;
         int n = tweets.size();
         Tweet tweet;
@@ -352,42 +368,80 @@ private static boolean containsUser(User[] users, User user) {
                 throw new RuntimeException(e);
             }
         }
-        System.out.println(contador);
-        return contador;
+        long finish = System.currentTimeMillis();
+        long timeElapsed = finish - start;
+        System.out.printf("Cantidad de veces que se menciona la palabra \"%s\": %d%n", word, contador);
+        System.out.println("------------------------");
+        System.out.printf("%s %s%s%n", "Tiempo de ejecución:", timeElapsed, "ms");
+        System.out.println("------------------------");
     }
 
     public static void menu() throws DatosIncorrectos {
-        System.out.println("Menú principal");
-        System.out.println("Seleccione la opción del menú: ");
-        System.out.println("    1. Listar los 10 pilotos activos en la temporada 2023 más mencionados en los tweets en un mes");
-        System.out.println("    2. Top 15 usuarios con más tweets. ");
-        System.out.println("    3. Cantidad de hashtags distintos para un día dado");
-        System.out.println("    4. Hashtag más usado para un día dado, sin tener en cuenta #f1");
-        System.out.println("    5. Top 7 cuentas con más favoritos");
-        System.out.println("    6. Cantidad de tweets con una palabra o frase específicos");
-        System.out.println("    7. Finalizar programa");
+        int numero = 0;
+        Scanner choice;
+        while (numero != 7) {
+            System.out.println("Menú principal");
+            System.out.println("Seleccione la opción del menú: ");
+            System.out.println("    1. Listar los 10 pilotos activos en la temporada 2023 más mencionados en los tweets en un mes");
+            System.out.println("    2. Top 15 usuarios con más tweets. ");
+            System.out.println("    3. Cantidad de hashtags distintos para un día dado");
+            System.out.println("    4. Hashtag más usado para un día dado, sin tener en cuenta #f1");
+            System.out.println("    5. Top 7 cuentas con más favoritos");
+            System.out.println("    6. Cantidad de tweets con una palabra o frase específicos");
+            System.out.println("    7. Finalizar programa");
 
-        System.out.print("Ingrese su opción: ");
-        Scanner choice = new Scanner(System.in);
-        int numero = choice.nextInt();
+            System.out.print("Ingrese su opción: ");
+            choice = new Scanner(System.in);
+            numero = choice.nextInt();
 
-        if (numero == 1) {
-            search10MostActivePilots("2021", "12");
-        } else if (numero == 2) {
-            System.out.println("Hola, opción 2");
-        } else if (numero == 3) {
-            System.out.println("Hola, opción 3");
-        } else if (numero == 4) {
-            System.out.println(mostUsedHashtag(2021, 12, 12));
-        } else if (numero == 5) {
-            System.out.println(top7WithMoreFavourite(usuariosLista, 7));
-        } else if (numero == 6) {
-            System.out.println(countTweetsWithWord());
-        } else if (numero == 7) {
-            System.out.println("Opción 7, finaliza el programa");
-
-        } else {
-            System.out.println("Opción inválida");
+            if (numero == 1) {
+                System.out.println("\f");
+                System.out.print("Ingrese año a buscar: ");
+                choice = new Scanner(System.in);
+                Integer anio = choice.nextInt();
+                System.out.print("Ingrese mes a buscar: ");
+                choice = new Scanner(System.in);
+                Integer mes = choice.nextInt();
+                search10MostActivePilots(anio, mes);
+            } else if (numero == 2) {
+                search15UsersMostTweets();
+            } else if (numero == 3) {
+                System.out.println("\f");
+                System.out.print("Ingrese fecha a buscar en formato YYYY-MM-DD: ");
+                choice = new Scanner(System.in);
+                String fecha = choice.nextLine();
+                try {
+                    String[] fechaSplit = fecha.split("-", -1);
+                    distictCantHashtagsDay(Integer.parseInt(fechaSplit[0]), Integer.parseInt(fechaSplit[1]), Integer.parseInt(fechaSplit[2]));
+                } catch (Exception e) {
+                    System.out.println("Datos incorrectos");
+                }
+            } else if (numero == 4) {
+                System.out.println("\f");
+                System.out.print("Ingrese fecha a buscar en formato YYYY-MM-DD: ");
+                choice = new Scanner(System.in);
+                String fecha = choice.nextLine();
+                try {
+                    String[] fechaSplit = fecha.split("-", -1);
+                    mostUsedHashtag(Integer.parseInt(fechaSplit[0]), Integer.parseInt(fechaSplit[1]), Integer.parseInt(fechaSplit[2]));
+                } catch (Exception e) {
+                    System.out.println("Datos incorrectos");
+                }
+            } else if (numero == 5) {
+                top7WithMoreFavourite();
+            } else if (numero == 6) {
+                System.out.println("\f");
+                System.out.print("Ingrese la palabra a buscar: ");
+                choice = new Scanner(System.in);
+                String word = choice.nextLine().toLowerCase();
+                countTweetsWithWord(word);
+            } else if (numero == 7) {
+                System.out.println("\f");
+                System.out.println("Opción 7, finaliza el programa");
+            } else {
+                System.out.println("\f");
+                System.out.println("Opción inválida");
+            }
         }
     }
 }
