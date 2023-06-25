@@ -1,8 +1,5 @@
 package entities;
 
-import uy.edu.um.prog2.adt.LinkedList;
-import uy.edu.um.prog2.adt.LinkedListImpl;
-
 import java.time.LocalDate;
 
 public class User {
@@ -69,9 +66,6 @@ public class User {
 
     @Override
     public String toString() {
-        return "User {" +
-                "name='" + name + '\'' +
-                ", favourite=" + favourite +
-                '}';
+        return name + " | Favoritos: " + favourite;
     }
 }
