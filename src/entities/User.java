@@ -3,17 +3,22 @@ package entities;
 import uy.edu.um.prog2.adt.LinkedList;
 import uy.edu.um.prog2.adt.LinkedListImpl;
 
+import java.time.LocalDate;
+
 public class User {
     private long id;
     private String name;
     private boolean verificado;
     private double favourite;
 
-    public User(long id, String name, boolean verificado, double favourite) {
+    private LocalDate updateDate;
+
+    public User(long id, String name, boolean verificado, double favourite, LocalDate date) {
         this.id = id;
         this.name = name;
         this.verificado = verificado;
         this.favourite = favourite;
+        this.updateDate = date;
     }
 
     public User(long id, String name, boolean verificado) {
@@ -54,9 +59,17 @@ public class User {
         this.favourite = favourite;
     }
 
+    public LocalDate getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(LocalDate updateDate) {
+        this.updateDate = updateDate;
+    }
+
     @Override
     public String toString() {
-        return "User{" +
+        return "User {" +
                 "name='" + name + '\'' +
                 ", favourite=" + favourite +
                 '}';

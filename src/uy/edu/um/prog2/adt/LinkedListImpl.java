@@ -114,10 +114,9 @@ public class LinkedListImpl<T> implements LinkedList<T> {
         StringBuilder sb = new StringBuilder();
         Node<T> currentNode = first;
         while (currentNode != null) {
-            sb.append(currentNode.getValue()).append(" -> ");
+            sb.append(currentNode.getValue()).append("\n");
             currentNode = currentNode.getNext();
         }
-        sb.append("null");
         return sb.toString();
     }
 
